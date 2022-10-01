@@ -121,7 +121,8 @@ function activate_process() {
   `answer_type` varchar(10) NOT NULL,
   `answer` varchar(255) NOT NULL,
   `votes` int(11) NOT NULL,
-  `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `orders` int(11) NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;";
 
 $sql2 = "CREATE TABLE IF NOT EXISTS `az_survey_forms` (
@@ -137,7 +138,8 @@ $sql3 = "CREATE TABLE IF NOT EXISTS `az_survey_questions` (
   `id` int(11) NOT NULL,
   `survey_id` int(11) NOT NULL,
   `question` varchar(255) NOT NULL,
-  `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `orders` int(11) NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;";
 
 $sql4 = "ALTER TABLE `az_survey_questions`

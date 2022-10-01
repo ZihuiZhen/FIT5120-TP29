@@ -1,8 +1,19 @@
 <?php
 	global $wpdb;
 	$survey_form = $wpdb->get_row("select * from az_survey_forms where id='$id'");
+	wp_enqueue_script( 'test-scripte', plugins_url(). '/Wordpress-Survey-Plugin/js/test.js', false );
 ?>
 <style>
+
+[id^="question-"] {
+	display: none;
+}
+
+[id^="question-"].active {
+	display: block;
+}
+
+
 #success_msg
 {
 	width:100%;
@@ -20,7 +31,7 @@
 		{
 			?>
 
-			<div class="question">
+			<div class="question" id="question-<?= $question->id ?>">
 
 			<?php
 			echo "<input type='hidden' name='question_ids[]' value='".$question->id."' /><h3> ".($question_index+1).": ".stripslashes($question->question)."</h3>";
