@@ -1,0 +1,25 @@
+/* h1 {
+	color: red;
+}
+
+.question {
+	background-color: blue;
+}
+
+#question-4 {
+	background-color: gray;
+} */
+
+.activity-content {
+	display: flex;
+}
+
+.activity img {
+	width: 300px !important;
+	height: 200px !important;
+	margin-right: 0.5em !important;
+}
+
+.activity-read-more {
+	float: right !important;
+}

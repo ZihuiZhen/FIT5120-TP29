@@ -1,0 +1,1 @@
+<h1> 'activities page is working' </h1>

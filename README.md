@@ -3,11 +3,11 @@
 Plugin to create Survey Form and display using short code.
 
 Features:
-- Unlimited survey forms
-- Unlimited questions
-- Unlimited answers
-- Create duplicate of questions (including their answers) or just answers
-- Delete or edit survey forms, questions or answers
-- Answer types: radio, checkbox and open questions
-- Easy to use using short Code 
-- Short code to display stats for every survey form.
+- Unlimited Survey Forms
+- Unlimited Questions
+- Unlimited Answers
+- Cureate Duplicate of Questions (including their answers) or just Answers
+- Delete or Edit survey forms, questions or answers
+- Answer Types: Radio, Checkbox and Open Questions
+- Easy to use using Short Code 
+- Short Code to display stats for every survey form.

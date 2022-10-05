@@ -3,23 +3,45 @@
     Plugin Name: Survey Plus
     Description: Plugin for showing and creating survey form
     Author: Ayyaz Zafar
-    Version: 1.0
+    Version: 1.6
     Author URI: http://www.AyyazZafar.com
 
 
     */
 
-
-
-
-
 add_action('admin_menu', 'az_survey_form_menu');
 
+/**
+ * Add admin menu list
+ */
 function az_survey_form_menu() {
+
+	// Add top level menu
     add_menu_page("Survey Forms", "Survey Forms", 'manage_options', "survey-plus", "sfp_main_page");
+
+	// Add sub menus
     add_submenu_page (null,  'edit survey', 'edit survey', 1, 'edit-az-survey-form', "sfp_edit_survey_form");
     add_submenu_page ('survey-plus',  'Add New', 'Add New', 1, 'add-new-az-survey-form', "spf_new_survey_form");
+	add_submenu_page ('survey-plus',  'Categories', 'Categories', 1, 'az-survey-categories', "spf_categories");
+	add_submenu_page ('survey-plus',  'Activities', 'Activities', 1, 'az-survey-activities', "spf_activities");
+	add_submenu_page ('survey-plus',  'Settings', 'Settings', 1, 'az-survey-settings', "spf_settings");
 }
+
+function spf_categories()
+{
+	include("admin/categories.php");
+}
+
+function spf_settings()
+{
+	include("admin/settings.php");
+}
+
+function spf_activities()
+{
+	include("admin/activities.php");
+}
+
 function spf_edit_survey_form()
 {
 
@@ -29,6 +51,7 @@ function spf_new_survey_form()
 {
 	include("admin/new_survey_form.php");
 }
+
 function submit_survey_form()
 {
 	$title = $_POST['title'];
@@ -110,11 +133,14 @@ function sfp_main_page()
  
 
 
-
+/**
+ * Create/Update tables
+ */
 function activate_process() {
 
     global $wpdb; 
 
+	// Create the survey answers
 	$sql1="CREATE TABLE IF NOT EXISTS `az_survey_answers` (
   `id` int(11) NOT NULL,
   `question_id` int(11) NOT NULL,
@@ -125,15 +151,14 @@ function activate_process() {
   `orders` int(11) NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;";
 
+// Create the survey forms
 $sql2 = "CREATE TABLE IF NOT EXISTS `az_survey_forms` (
   `id` int(11) NOT NULL,
   `title` varchar(255) NOT NULL,
   `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;";
 
-
-
-
+// Create the survey questions
 $sql3 = "CREATE TABLE IF NOT EXISTS `az_survey_questions` (
   `id` int(11) NOT NULL,
   `survey_id` int(11) NOT NULL,
@@ -154,6 +179,51 @@ $sql7 = "ALTER TABLE `az_survey_questions`
 $sql8 = "ALTER TABLE `az_survey_forms`
   ADD PRIMARY KEY (`id`);";
 $sql9 = "ALTER TABLE `az_survey_forms` CHANGE `id` `id` INT(11) NOT NULL AUTO_INCREMENT;";
+
+	// Create the categories
+$sql10 = "CREATE TABLE IF NOT EXISTS `az_survey_categories` (
+	`id` int(11) NOT NULL AUTO_INCREMENT,
+	`category_name` varchar(255) NOT NULL,
+	`category_slug` varchar(255) NOT NULL,
+	PRIMARY KEY(id)
+  ) ENGINE=MyISAM DEFAULT CHARSET=utf8;";
+
+// $sql11 = "ALTER TABLE `az_survey_categories`
+//   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;";
+// $sql12 = "ALTER TABLE `az_survey_categories`
+//   ADD PRIMARY KEY (`id`);";
+
+// create the result table
+$sql11 = "CREATE TABLE IF NOT EXISTS `az_survey_activities` (
+	`id` int(11) NOT NULL AUTO_INCREMENT,
+	`activity_name` varchar(255) NOT NULL,
+	`activity_slug` varchar(255) NOT NULL,
+	`activity_description` varchar(255) NOT NULL,
+	`post_id` int(11),
+	PRIMARY KEY (id)
+  ) ENGINE=MyISAM DEFAULT CHARSET=utf8;";
+
+// $sql14 = "ALTER TABLE `az_survey_activities`
+// MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;";
+// $sql15 = "ALTER TABLE `az_survey_activities`
+// ADD PRIMARY KEY (`id`);";
+
+
+	/** 
+	* 0		0(Card Game) => 	0(recreation)	100(recreational)
+	* 1		0(Card Game) =>		4(Individual)	50(both)
+	*/
+$sql12 = "CREATE TABLE IF NOT EXISTS `az_survey_activities_categories` (
+	`id` int(11) NOT NULL AUTO_INCREMENT,
+	`activity_id` int(11) NOT NULL,
+	`category_id` int(11) NOT NULL,
+	`rating` int(11) NOT NULL,
+	PRIMARY KEY (id)
+  ) ENGINE=MyISAM DEFAULT CHARSET=utf8;";
+
+
+
+	// Run the queries
 	$result= $wpdb->get_results($sql1);
 	$result= $wpdb->get_results($sql2);
 	$result= $wpdb->get_results($sql3);
@@ -163,11 +233,66 @@ $sql9 = "ALTER TABLE `az_survey_forms` CHANGE `id` `id` INT(11) NOT NULL AUTO_IN
 	$result= $wpdb->get_results($sql7);
 	$result= $wpdb->get_results($sql8);
 	$result= $wpdb->get_results($sql9);
+	$result= $wpdb->get_results($sql10);
+	$result= $wpdb->get_results($sql11);
+	$result= $wpdb->get_results($sql12);
+	// $result= $wpdb->get_results($sql13);
+	// $result= $wpdb->get_results($sql14);
+	// $result= $wpdb->get_results($sql15);
+	// $result= $wpdb->get_results($sql16);
+
+
+	// Clear debug table entries
+	$wpdb->query('TRUNCATE TABLE az_survey_categories');
+	$wpdb->query('TRUNCATE TABLE az_survey_activities');
+	$wpdb->query('TRUNCATE TABLE az_survey_activities_categories');
+
+
+	 // Insert the categories
+	$wpdb->insert('az_survey_categories', array( 'category_name'=> 'Recreation', 'category_slug'=> 'recreation'));
+	$wpdb->insert('az_survey_categories', array( 'category_name'=> 'Outdoor', 'category_slug'=> 'outdoor'));
+	$wpdb->insert('az_survey_categories', array( 'category_name'=> 'Location', 'category_slug'=> 'location'));
+	$wpdb->insert('az_survey_categories', array( 'category_name'=> 'Intensity', 'category_slug'=> 'intensity'));
+	$wpdb->insert('az_survey_categories', array( 'category_name'=> 'Individual', 'category_slug'=> 'individual'));
+	$wpdb->insert('az_survey_categories', array( 'category_name'=> 'Skills', 'category_slug'=> 'skills'));
+
+	$wpdb->insert('az_survey_activities', array( 'activity_name'=> 'Card Game', 'activity_slug'=> 'card_game', 'activity_description'=> 'recreation and indoor'));
+	$wpdb->insert('az_survey_activities', array( 'activity_name'=> 'Golf','activity_slug'=> 'golf', 'activity_description'=> 'Sport and outdoor'));
+	$wpdb->insert('az_survey_activities', array( 'activity_name'=> 'Cycling','activity_slug'=> 'cycling','activity_description'=> 'Sport and medium-high intensity'));
+	$wpdb->insert('az_survey_activities', array( 'activity_name'=> 'Mindfulness','activity_slug'=> 'mindfulness', 'activity_description'=> 'recreation, indoor and individual'));
+	$wpdb->insert('az_survey_activities', array( 'activity_name'=> 'Music', 'activity_slug'=> 'music','activity_description'=> 'Both, individual and recreation'));
+
+	// Activity Card Games
+	$wpdb->insert('az_survey_activities_categories', array( 'activity_id'=> 1, 'category_id'=> 1, 'rating'=> 100));
+	$wpdb->insert('az_survey_activities_categories', array( 'activity_id'=> 1, 'category_id'=> 2, 'rating'=> 50));
+	$wpdb->insert('az_survey_activities_categories', array( 'activity_id'=> 1, 'category_id'=> 3, 'rating'=> 50));
+	$wpdb->insert('az_survey_activities_categories', array( 'activity_id'=> 1, 'category_id'=> 4, 'rating'=> 0));
+	$wpdb->insert('az_survey_activities_categories', array( 'activity_id'=> 1, 'category_id'=> 5, 'rating'=> 50));
+	$wpdb->insert('az_survey_activities_categories', array( 'activity_id'=> 1, 'category_id'=> 6, 'rating'=> 50));
+
+	// Activity music
+	$wpdb->insert('az_survey_activities_categories', array( 'activity_id'=> 5, 'category_id'=> 1, 'rating'=> 100));
+	$wpdb->insert('az_survey_activities_categories', array( 'activity_id'=> 5, 'category_id'=> 2, 'rating'=> 50));
+	$wpdb->insert('az_survey_activities_categories', array( 'activity_id'=> 5, 'category_id'=> 3, 'rating'=> 50));
+	$wpdb->insert('az_survey_activities_categories', array( 'activity_id'=> 5, 'category_id'=> 4, 'rating'=> 0));
+	$wpdb->insert('az_survey_activities_categories', array( 'activity_id'=> 5, 'category_id'=> 5, 'rating'=> 50));
+	$wpdb->insert('az_survey_activities_categories', array( 'activity_id'=> 5, 'category_id'=> 6, 'rating'=> 0));
+
+	// Activity mindfulness
+	$wpdb->insert('az_survey_activities_categories', array( 'activity_id'=> 4, 'category_id'=> 1, 'rating'=> 100));
+	$wpdb->insert('az_survey_activities_categories', array( 'activity_id'=> 4, 'category_id'=> 2, 'rating'=> 50));
+	$wpdb->insert('az_survey_activities_categories', array( 'activity_id'=> 4, 'category_id'=> 3, 'rating'=> 50));
+	$wpdb->insert('az_survey_activities_categories', array( 'activity_id'=> 4, 'category_id'=> 4, 'rating'=> 0));
+	$wpdb->insert('az_survey_activities_categories', array( 'activity_id'=> 4, 'category_id'=> 5, 'rating'=> 100));
+	$wpdb->insert('az_survey_activities_categories', array( 'activity_id'=> 4, 'category_id'=> 6, 'rating'=> 0));
+	
 	echo $wpdb->last_error;
 
-
-	
 }
+
+/**
+ * Create the survey page shortcode
+ */
  function az_surveyplus_func( $atts ){
  	ob_start();
  	$id = $atts['id'];
@@ -175,8 +300,56 @@ $sql9 = "ALTER TABLE `az_survey_forms` CHANGE `id` `id` INT(11) NOT NULL AUTO_IN
  	$content = ob_get_contents();
  	ob_end_clean();
 		return $content;
-	}
-	add_shortcode( 'az_surveyplus', 'az_surveyplus_func' );
+}
+
+// Register the shortcode
+add_shortcode( 'az_surveyplus', 'az_surveyplus_func' );
+
+/**
+ * Create the result page shortcode
+ */
+function az_surveyplus_result_func( $atts ){
+
+	wp_enqueue_style('main-styles', plugins_url() . '/Wordpress-Survey-Plugin/css/style.css');
+
+	$id_list = [40,48,50];
+
+	$args = array(
+		//'p'         => 40, // ID of a page, post, or custom type
+		'post__in' => $id_list,
+		'orderby' => 'ASC',
+		'post_type' => 'any'
+	  );
+	  $results = new WP_Query($args);
+
+	//   die('<pre>'. print_r($results, true));
+
+	/*
+
+
+SELECT az_survey_activities.id as activity_id, activity_name, category_name, rating 
+FROM az_survey_activities_categories
+INNER JOIN az_survey_activities ON az_survey_activities.id = az_survey_activities_categories.activity_id
+INNER JOIN az_survey_categories ON az_survey_categories.id = az_survey_activities_categories.category_id
+WHERE 
+	(category_name = 'Individual' AND rating >= '50')
+OR (category_name = 'Skills' AND rating < '50')
+ORDER BY activity_id
+;	
+
+	*/
+
+	ob_start();
+	$id = $atts['id'];
+	include('views/survey_result.php');
+	$content = ob_get_contents();
+	ob_end_clean();
+	   return $content;
+}
+
+// Register the shortcode
+add_shortcode( 'az_surveyplus_result', 'az_surveyplus_result_func' );
+
 
 function az_surveyplus_stats_func( $atts ){
  	ob_start();

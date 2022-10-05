@@ -1,10 +1,15 @@
 <?php
 	global $wpdb;
 	$survey_form = $wpdb->get_row("select * from az_survey_forms where id='$id'");
-	wp_enqueue_script( 'test-scripte', plugins_url(). '/Wordpress-Survey-Plugin/js/test.js', false );
+	//wp_enqueue_script( 'test-scripte', plugins_url(). '/Wordpress-Survey-Plugin/js/test.js', false );
+	wp_enqueue_script( 'jquery-script', 'https://code.jquery.com/jquery-2.2.4.min.js');
+	wp_enqueue_script( 'test-script', plugins_url(). '/Wordpress-Survey-Plugin/js/survey.js', false );
+
+	wp_enqueue_style('main-styles', plugins_url() . '/Wordpress-Survey-Plugin/css/style.css');
 ?>
 <style>
 
+/*
 [id^="question-"] {
 	display: none;
 }
@@ -12,6 +17,7 @@
 [id^="question-"].active {
 	display: block;
 }
+*/
 
 
 #success_msg
@@ -50,10 +56,8 @@
 				}
 				else
 				{
-					
-					 echo stripslashes($answer->answer)." <br> <input type='text' value='' name='answers[question_".$question_index."][open][$answer->id]' /> "."<br><br>";
+					echo "<input type='hidden' name='answer_ids[question_".$question_index."][]' value='".$answer->id."' />";
 				}
-				echo "<input type='hidden' name='answer_ids[question_".$question_index."][]' value='".$answer->id."' />";
 			?>
 			</div>
 			<?php
@@ -67,7 +71,7 @@
 
 	?>
 	<br><br>
-	<input type="submit" value="Verzenden" />
+	<input id="submitSurvey" type="submit" value="Submit" />
 </form>
 
 <script>
@@ -121,7 +125,10 @@ $('#survey_form').on('submit', function(e){
 	}).done(function(response){
 		if(response=='1')
 		{
-			$("#survey_form").html("<div id='success_msg'>Bedankt voor uw deelname!</div>");
+			//$("#survey_form").html("<div id='success_msg'>Bedankt voor uw deelname!</div>");
+			
+			// Simulate a mouse click:
+			window.location.href = "https://activitiesforcarers.cf/activity-suggestions/";
 		}
 		else
 		{
@@ -141,8 +148,8 @@ $(this).closest('.question').find('.answer').each(function(index){
 
 $(".answer input[type='radio']").on('click',function(){
 
-$(this).closest('.question').find('.answer').each(function(index){
-     $(this).find('input[type="text"]').val('');
-});
+	$(this).closest('.question').find('.answer').each(function(index){
+		$(this).find('input[type="text"]').val('');
+	});
 });
 </script>
