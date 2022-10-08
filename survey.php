@@ -3,7 +3,7 @@
     Plugin Name: Survey Plus
     Description: Plugin for showing and creating survey form
     Author: Ayyaz Zafar
-    Version: 1.7
+    Version: 1.8
     Author URI: http://www.AyyazZafar.com
 
 
@@ -616,17 +616,33 @@ function az_survey_init() {
 	az_survey_create_posttype();
 }
 
+function az_survey_filter_field_names($field_list, $field_name){
+	
+	$az_fields = [];
+
+	foreach ($field_list as $key => $value){
+
+		if (str_contains($key, $field_name)) {
+			// echo $key.' : '.$value[0].'<br/>';
+			$az_fields = array_merge($az_fields, array($key => $value[0]));
+		}
+	}
+
+	return $az_fields;
+}
+
 function az_survey_rating_MB( $post ) {
 
     // Add a nonce field so we can check for it later.
     wp_nonce_field( 'az_survey_rating_nonce', 'az_survey_rating_nonce' );
 
-    $value = get_post_meta( $post->ID, 'az_survey_rating', true );
+	
+    $all_meta = get_post_meta( $post->ID);
+	$az_meta = az_survey_filter_field_names($all_meta,'az_survey_rating');
 
 	$catList = az_survey_get_post_categories($post->ID);
 
 	include("views/admin/rating_metabox.php");
-    // echo '<textarea style="width:100%" id="az_survey_rating" name="az_survey_rating">' . esc_attr( $value ) . '</textarea>';
 }
 
 function az_survey_get_post_categories($post_id){
@@ -677,6 +693,10 @@ function az_survey_rating_meta_box_save_data( $post_id ) {
     }
 
     /* OK, it's safe for us to save the data now. */
+
+	
+	$all_meta = get_post_meta( $post_id);
+	$az_meta = az_survey_filter_field_names($all_meta,'az_survey_rating');
 	
 	$catRatings = array();
 
@@ -688,7 +708,31 @@ function az_survey_rating_meta_box_save_data( $post_id ) {
 		// Make sure that it is set.
 		if (isset( $_POST[$name] ) ) {
 			$catRatings[$name] = intval($_POST[$name]);
+			update_post_meta( $post_id, $name, $catRatings[$name] );
 		}
+	}
+
+	// $az_meta = [
+	// 	'az_survey_ratings' => 'asdfasdf',
+	// 	'az_survey_skill' => 50,
+	// 	'az_survey_location' => 50
+	// ];
+
+	// $catRatings = [
+	// 	'az_survey_skill' => 70,
+	// 	'az_survey_indoor' => 100,
+	// ];
+
+	$remove_fields = array_diff_key($az_meta,$catRatings);
+
+	// $remove_fields = [
+	// 	'az_survey_ratings' => 'asdfasdf',
+	// 	'az_survey_location' => 50,
+	// ];
+
+
+	foreach ($remove_fields as $key => $value){
+		delete_post_meta($post_id, $key);
 	}
 
     // Sanitize user input.
@@ -697,7 +741,7 @@ function az_survey_rating_meta_box_save_data( $post_id ) {
 	
 
     // Update the meta field in the database.
-    update_post_meta( $post_id, 'az_survey_rating', $my_data );
+    // update_post_meta( $post_id, 'az_survey_rating', $my_data );
 }
 
 
