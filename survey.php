@@ -3,7 +3,7 @@
     Plugin Name: Survey Plus
     Description: Plugin for showing and creating survey form
     Author: Ayyaz Zafar
-    Version: 1.6
+    Version: 1.7
     Author URI: http://www.AyyazZafar.com
 
 
@@ -23,7 +23,7 @@ function az_survey_form_menu() {
     add_submenu_page (null,  'edit survey', 'edit survey', 1, 'edit-az-survey-form', "sfp_edit_survey_form");
     add_submenu_page ('survey-plus',  'Add New', 'Add New', 1, 'add-new-az-survey-form', "spf_new_survey_form");
 	add_submenu_page ('survey-plus',  'Categories', 'Categories', 1, 'az-survey-categories', "spf_categories");
-	add_submenu_page ('survey-plus',  'Activities', 'Activities', 1, 'az-survey-activities', "spf_activities");
+	// add_submenu_page ('survey-plus',  'Activities', 'Activities', 1, 'az-survey-activities', "spf_activities");
 	add_submenu_page ('survey-plus',  'Settings', 'Settings', 1, 'az-survey-settings', "spf_settings");
 }
 
@@ -581,4 +581,128 @@ function ajax_delete_survey_question()
 
 add_action('wp_ajax_delete_survey_question', 'ajax_delete_survey_question');
 
-?>
+
+// Our custom post type function
+function az_survey_create_posttype() {
+  
+    register_post_type( 'az_survey_activity',
+    // CPT Options
+        array(
+            'labels' => array(
+                'name' => __( 'Activities' ),
+                'singular_name' => __( 'Activitiy' )
+            ),
+            'public' => true,
+            'has_archive' => true,
+            'rewrite' => array('slug' => 'az_survey_activity'),
+            'show_in_rest' => true,
+				
+			'taxonomies'  => array( 'category', 'tags' ,'tag'),
+
+			'supports' => array( 'title', 'editor', 'excerpt', 'author', 'thumbnail', 'revisions', 'custom-fields', ),
+
+			// 'show_in_menu' => 'survey-plus',
+  
+        )
+    );
+}
+
+function az_survey_addmetaboxes() {
+	add_meta_box('az_survey_rating', 'Rating', 'az_survey_rating_MB', 'az_survey_activity', 'side');
+}
+
+
+function az_survey_init() {
+	az_survey_create_posttype();
+}
+
+function az_survey_rating_MB( $post ) {
+
+    // Add a nonce field so we can check for it later.
+    wp_nonce_field( 'az_survey_rating_nonce', 'az_survey_rating_nonce' );
+
+    $value = get_post_meta( $post->ID, 'az_survey_rating', true );
+
+	$catList = az_survey_get_post_categories($post->ID);
+
+	include("views/admin/rating_metabox.php");
+    // echo '<textarea style="width:100%" id="az_survey_rating" name="az_survey_rating">' . esc_attr( $value ) . '</textarea>';
+}
+
+function az_survey_get_post_categories($post_id){
+
+	$postCatIDs = wp_get_post_categories($post_id);
+	$catList = get_categories(array(
+		'include' => $postCatIDs
+	));
+	
+	return $catList;
+}
+
+/**
+ * When the post is saved, saves our custom data.
+ *
+ * @param int $post_id
+ */
+function az_survey_rating_meta_box_save_data( $post_id ) {
+
+    // Check if our nonce is set.
+    if ( ! isset( $_POST['az_survey_rating_nonce'] ) ) {
+        return;
+    }
+
+    // Verify that the nonce is valid.
+    if ( ! wp_verify_nonce( $_POST['az_survey_rating_nonce'], 'az_survey_rating_nonce' ) ) {
+        return;
+    }
+
+    // If this is an autosave, our form has not been submitted, so we don't want to do anything.
+    if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+        return;
+    }
+
+    // Check the user's permissions.
+    if ( isset( $_POST['post_type'] ) && 'page' == $_POST['post_type'] ) {
+
+        if ( ! current_user_can( 'edit_page', $post_id ) ) {
+            return;
+        }
+
+    }
+    else {
+
+        if ( ! current_user_can( 'edit_post', $post_id ) ) {
+            return;
+        }
+    }
+
+    /* OK, it's safe for us to save the data now. */
+	
+	$catRatings = array();
+
+	$catList = az_survey_get_post_categories($post_id);
+	foreach ($catList as $category) {
+
+		$name = 'az_survey_rating_'. $category->slug;
+
+		// Make sure that it is set.
+		if (isset( $_POST[$name] ) ) {
+			$catRatings[$name] = intval($_POST[$name]);
+		}
+	}
+
+    // Sanitize user input.
+    // $my_data = sanitize_text_field( $_POST['az_survey_rating'] );
+
+	
+
+    // Update the meta field in the database.
+    update_post_meta( $post_id, 'az_survey_rating', $my_data );
+}
+
+
+
+// Hooking up our function to theme setup
+add_action( 'init', 'az_survey_init' );
+add_action('add_meta_boxes', 'az_survey_addmetaboxes');
+add_action( 'save_post', 'az_survey_rating_meta_box_save_data' );
