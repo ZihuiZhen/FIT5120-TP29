@@ -3,7 +3,7 @@
     Plugin Name: Survey Plus
     Description: Plugin for showing and creating survey form
     Author: Ayyaz Zafar
-    Version: 1.10.1
+    Version: 1.11
     Author URI: http://www.AyyazZafar.com
 
 
@@ -385,22 +385,20 @@ function az_survey_get_meta_options($meta_key, $meta_value, &$allpostMeta, &$id_
 	}
 }
 
-function az_survey_results_sort_order($record1, $record2)
-{
-	// sort by the lowest count in reverse order
-	if($record1['count'] < $record2['count']) {
+function az_survey_results_sort_order($post1,$post2){
 
-		return 1;
-	}
-
-	// sort by the highest count in reverse order
-	if($record1['count'] > $record2['count']) {
-
-		return -1;
-	}
-
-	// sort by alphabetical order
-	return strcasecmp($record1['title'], $record2['title']);
+		// $post1 before $post2
+		if($post1['count'] > $post2['count']){
+			return -1;
+		}
+		// $post1 after $post2
+		else if($post1['count'] < $post2['count']){
+			return 1;
+		}
+		// alphabetic order
+		else{
+			return strcasecmp($post1['title'], $post2['title']);
+		}
 }
 
 /**
@@ -424,9 +422,9 @@ function az_surveyplus_results_func( $atts ){
 			$records = $wpdb->get_results($wpdb->prepare("select * from az_survey_answer_categories where answer_id=%s",$answer_id));
 			// echo 'records:<pre>'. print_r($records, true).  '</pre>';
 
-
-			// Find the answer categories
-			/* disable finding categories and post meta
+			
+			/*
+			 disable finding categories and post meta
 			if(!empty($records)){
 
 				$category = get_category($records[0]->category_id);
@@ -442,50 +440,57 @@ function az_surveyplus_results_func( $atts ){
 			az_survey_get_meta_options($meta_key, $meta_value, $allpostMeta, $id_list);
 			*/
 
-			if(!empty($records)) {
-				$args = array(
-					// find activity posts
+			if(!empty($records)){
+				
+
+				$args = array (
 					'post_type' => 'az_survey_activity',
-
-					// find for category id
 					'category' => $records[0]->category_id,
-
-					// // no limit for number of posts
 					'numberposts' => -1,
 				);
 				$posts = get_posts($args);
-				// echo 'posts<pre>'. print_r($posts, true). '</pre>';
 
-				if(!empty($posts)) {
+				// echo 'posts find category['. $records[0]->category_id. ']:<pre>'. print_r($posts, true).  '</pre>';
 
-					foreach($posts as $post) {
+				if(!empty($posts)){
+					foreach ($posts as $post){
 
-						$key = 'post_id_'. $post->ID;
-						// create a value for the first time
+						$key = 'post_id_'.$post->ID;
 						if (empty($allpostMeta[$key])) {
 
 							$allpostMeta[$key] = array(
+
 								'post_id' => $post->ID,
 								'title' => $post->post_title,
 								'count' => 1,
 							);
 
-						// update the value
-						} else {
+						}
+						else {
 
 							$allpostMeta[$key]['count'] = $allpostMeta[$key]['count'] + 1;
 						}
+
+						
 					}
 				}
 			}
+
 		}
 
 		usort($allpostMeta, 'az_survey_results_sort_order');
 
 		// echo 'allpostMeta:<pre>'. print_r($allpostMeta, true).  '</pre>';
-		foreach($allpostMeta as $post) {
+
+		$limit = 3;
+		foreach ($allpostMeta as $post){
 			array_push($id_list, $post['post_id']);
+			$limit--;
+			if($limit <= 0) {
+				break;
+			}
 		}
+
 		// echo 'id_list:<pre>'. print_r($id_list, true).  '</pre>';
 	}
 
@@ -497,7 +502,7 @@ function az_surveyplus_results_func( $atts ){
 		'post__in' => $id_list,
 		'orderby' => 'post__in',
 		'post_type' => 'az_survey_activity',
-		'number' => 3
+		'post_status' => 'publish',
 	  );
 	  $results = new WP_Query($args);
 
@@ -541,8 +546,7 @@ function sfp_edit_survey_form()
 	global $wpdb;
 
 	$args = array(
-		// get all the categories
-		'hide_empty' =>  false,
+		'hide_empty'      => false,
 	);
 	$categories = get_categories($args);
 
@@ -1029,10 +1033,8 @@ function az_survey_rating_meta_box_save_data( $post_id ) {
 
 // Hooking up our function to theme setup
 add_action( 'init', 'az_survey_init' );
-
-// Disable meta box and post save
-//add_action('add_meta_boxes', 'az_survey_addmetaboxes');
-//add_action( 'save_post', 'az_survey_rating_meta_box_save_data' );
+// add_action('add_meta_boxes', 'az_survey_addmetaboxes');
+// add_action( 'save_post', 'az_survey_rating_meta_box_save_data' );
 
 add_action('wp_enqueue_scripts', 'az_survey_enqueue_scripts');
 

@@ -1,8 +1,5 @@
 
-<p> This is our top 3 recommendations for the activity that suit your preferences </p>
- 
 <div class="wrap">
-
 
 <?php
 if ( $results->have_posts() ) :
@@ -11,9 +8,11 @@ if ( $results->have_posts() ) :
 		$results->the_post();
 		
 ?>
-	<div id="activity-3" class="activity">
+	<div id="activity-<?php the_ID() ?>" class="az_survey_activity">
 	
-		<h2><?php the_title() ?></h2> 
+		<div class="title-wrap">
+			<h2><?php the_title() ?></h2> <div class = "activity-read-more"><?php the_shortlink('read more >>>>') ?></div>
+		</div>
 		<div class="activity-content">
 
 		<?php
@@ -26,9 +25,6 @@ if ( $results->have_posts() ) :
 
 			<div class="description"><?php the_excerpt() ?></div>
 		</div>
-        <div class = "activity-read-more"><?php the_shortlink('read more >>>>') ?></div>
-        <!-- <p class="activity-read-more"> <a href="https://www.activitiesforcarers.cf/homepage/category/new-activities/1326-2/">read more >>>>></a> </p> -->
-		
 	</div>	
 
 <?php
