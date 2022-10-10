@@ -12,7 +12,16 @@ input.answer_order
     text-align: center;
     margin-right: 11px;
 }
-</style><div class="wrap">
+
+.categories {
+
+	margin-left: 2em;
+}
+</style>
+
+<?php $tmpCnt = 0; ?>
+
+<div class="wrap">
         <h2><i style="font-size:30px; padding-right:10px;" class="dashicons 
 dashicons-plus-alt"></i> Edit Survey Form</h2> 
 <div id="success_msg" class="updated notice notice-success is-dismissible" style="display:none"><p>Survey Form is updated successfully.</p><button type="button" class="notice-dismiss"><span class="screen-reader-text">Dismiss this notice.</span></button></div>
@@ -66,12 +75,54 @@ dashicons-plus-alt"></i> Edit Survey Form</h2>
 							<select onchange="" name="answer_types[<?php echo $question_number-1; ?>][]">
 								<option value="single" <?php echo ($answer->answer_type=="single")?"selected":""; ?>>Single</option>
 								<option value="multiple" <?php echo ($answer->answer_type=="multiple")?"selected":""; ?>>Multiple</option>
-								<option value="open" <?php echo ($answer->answer_type=="open")?"selected":""; ?>>Open</option></select>
+								<option value="open" <?php echo ($answer->answer_type=="open")?"selected":""; ?>>Open</option>
+							</select>
 							<input type="text" value="<?php  echo stripslashes($answer->answer); ?>" class="" name="answers[<?php echo $question_number-1; ?>][]" />
 
 							<a href="javascript:void(0);" style="text-decoration:none" onclick="delete_answer(this)"><span class="dashicons dashicons-trash"></span></a> <input type="text" value="<?php echo $answer->orders ?>" name="answer_order[<?php echo $question_number-1; ?>][]" class="answer_order">
+
+								<div class='categories'>
+									<h4>Categories</h4>
+
+									<?php
+
+									/*
+									[term_id] => 4
+									[name] => Activity
+									[slug] => activity
+									[term_group] => 0
+									[term_taxonomy_id] => 4
+									[taxonomy] => category
+									[description] => Activities available
+									[parent] => 0
+									[count] => 2
+									[filter] => raw
+									[cat_ID] => 4
+									[category_count] => 2
+									[category_description] => Activities available
+									[cat_name] => Activity
+									[category_nicename] => activity
+									[category_parent] => 0
+									*/
+
+									?>
+
+									<input type="hidden" value="<?php echo $answer_ratings[$answer->id]->id ?>" name="ac_record_id[<?php echo $question_number-1; ?>][]" />
+									<select onchange="" name="answer_category_id[<?= $question_number-1 ?>][]">
+									<?php foreach ($categories as $category): ?>
+
+										<option value="<?php echo $category->cat_ID  ?>"   <?php echo ($answer_ratings[$answer->id]->category_id == $category->cat_ID) ? "selected" : ""; ?> ><?php echo $category->name ?></option>
+									<?php endforeach ?>
+									</select>
+
+									<input type="text" id="answer_category_rating" name="answer_category_rating[<?= $question_number-1 ?>][]" value="<?php echo $answer_ratings[$answer->id]->rating ?>"> 
+
+								</div>
+
 						</div>
-						<?php endforeach; ?>
+						<?php 
+					$tmpCnt++;
+					endforeach; ?>
 					</div>
 
 					<a href="#" style="float:right" class="add_answer_btn">+ Add Answer</a>
@@ -87,7 +138,7 @@ dashicons-plus-alt"></i> Edit Survey Form</h2>
     <script>
     $ = jQuery;
     var ajax_url 		= '<?php echo admin_url('admin-ajax.php'); ?>';
-    function submit_form()
+    function submit_form(e)
 	{
 		
 		// hide success msg whenever submit is pressed
@@ -104,27 +155,22 @@ dashicons-plus-alt"></i> Edit Survey Form</h2>
 		$.ajax({
 			url:ajax_url,
 			type:"POST",
+			method: "POST",
 			data:formData,
 			cache:false,
 			contentType:false,
 			processData:false
 		}).done(function(responseTxt){
-			if(responseTxt!='1')
-			{
-				alert(responseTxt);
-			}
-			else 
-			{
-				//   $("html, body").animate({ scrollTop: 0 }, "slow");
 
-				// $("#success_msg").fadeIn(); 
+			try {
 
-				// setTimeout(function(){$("#success_msg").fadeOut(); }, 2000);
+				var res = JSON.parse(responseTxt);
+				console.log('res', res);
+				// location.reload();
 
-				location.reload();
-			}
-			
-			
+			} catch(e) {
+				console.log('error in response', responseTxt);
+			}			
 		});
 		return false;
 	}
@@ -313,5 +359,12 @@ dashicons-plus-alt"></i> Edit Survey Form</h2>
 	}
 
 
+	// form = $('form');
+	// form.submit((e) => {
+
+	// 	console.log('submit form');
+	// 	e.prevenDefault();
+	// 	return false;
+	// })
 	
 	</script>

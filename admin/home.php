@@ -40,9 +40,11 @@
                 <tr id="survey_<?php echo $survey->id;?>" data-id="<?php echo $survey->id;?>" class="<?php echo $survey->id;?>">
                   <td><?php echo $survey->title;?></td>
                   <td><?php echo $survey->total_questions; ?></td>
-                  <td><code id="code_<?php echo $survey->id;?>" onclick="selectText('code_<?php echo $survey->id;?>')">[az_surveyplus id="<?php echo $survey->id;?>"]
-                  </code><code id="code_stats_<?php echo $survey->id;?>"  onclick="selectText('code_stats_<?php echo $survey->id;?>')">
-                    [az_surveyplus_stats id="<?php echo $survey->id;?>"]</code></td>
+                  <td>
+					<code id="code_<?php echo $survey->id;?>" onclick="selectText('code_<?php echo $survey->id;?>')">[az_surveyplus id="<?php echo $survey->id;?>"]</code><br>
+					<code id="code_stats_<?php echo $survey->id;?>"  onclick="selectText('code_stats_<?php echo $survey->id;?>')">[az_surveyplus_stats id="<?php echo $survey->id;?>"]</code><br>
+                	<code id="code_results_<?php echo $survey->id;?>"  onclick="selectText('code_results_<?php echo $survey->id;?>')">[az_surveyplus_results id="<?php echo $survey->id;?>"]</code>
+				</td>
                   <td><a data-id="<?php echo $survey->id;?>" class="delete" href="javascript:void(0)">Delete</a> |  <a href="<?php echo  admin_url()."admin.php?page=edit-az-survey-form&action=edit&id=".$survey->id; ?>">Edit</a></td>
                 </tr>
                 <?php
@@ -52,104 +54,6 @@
             </table>	
 		</form>
 	</div>	      
-
-	<div class="wrap">
-    <div id="success_msg" class="updated notice notice-success is-dismissible" style="display:none"><p>Survey Form is deleted successfully.</p><button type="button" class="notice-dismiss"><span class="screen-reader-text">Dismiss this notice.</span></button></div>
-
-        <h2><span class="dashicons dashicons-admin-comments"></span> Categories</h2> 
-        
-           
-		
-        <form method="POST" action="">
-            <table class="wp-list-table widefat fixed">
-                <thead>
-                  <tr>
-                    <th scope="col" id="username" class="manage-column column-username" style="">
-                       Title  
-                    </th>
-                    <th style="width:25%" scope="col" id="cb" class="manage-column column-cb " style="">
-                      Total Questions
-                    </th>
-                    <th  style="width:25%">Short Code</th>
-                
-                    <th style="width:10%">
- 
-                    </th>
-                    
-                  </tr>
-				        </thead>
-              <tbody id="the-list">
-                <?php
-                foreach($rows as $survey)
-                {
- 
- 
-                ?>            
-                <tr id="survey_<?php echo $survey->id;?>" data-id="<?php echo $survey->id;?>" class="<?php echo $survey->id;?>">
-                  <td><?php echo $survey->title;?></td>
-                  <td><?php echo $survey->total_questions; ?></td>
-                  <td><code id="code_<?php echo $survey->id;?>" onclick="selectText('code_<?php echo $survey->id;?>')">[az_surveyplus id="<?php echo $survey->id;?>"]
-                  </code><code id="code_stats_<?php echo $survey->id;?>"  onclick="selectText('code_stats_<?php echo $survey->id;?>')">
-                    [az_surveyplus_stats id="<?php echo $survey->id;?>"]</code></td>
-                  <td><a data-id="<?php echo $survey->id;?>" class="delete" href="javascript:void(0)">Delete</a> |  <a href="<?php echo  admin_url()."admin.php?page=edit-az-survey-form&action=edit&id=".$survey->id; ?>">Edit</a></td>
-                </tr>
-                <?php
-              }
-              ?>
-              </tbody>
-            </table>	
-		</form>
-	</div>	      
-
-  <div class="wrap">
-    <div id="success_msg" class="updated notice notice-success is-dismissible" style="display:none"><p>Survey Form is deleted successfully.</p><button type="button" class="notice-dismiss"><span class="screen-reader-text">Dismiss this notice.</span></button></div>
-
-        <h2><span class="dashicons dashicons-admin-comments"></span> Activities</h2> 
-        
-           
-		
-        <form method="POST" action="">
-            <table class="wp-list-table widefat fixed">
-                <thead>
-                  <tr>
-                    <th scope="col" id="username" class="manage-column column-username" style="">
-                       Title  
-                    </th>
-                    <th style="width:25%" scope="col" id="cb" class="manage-column column-cb " style="">
-                      Total Questions
-                    </th>
-                    <th  style="width:25%">Short Code</th>
-                
-                    <th style="width:10%">
- 
-                    </th>
-                    
-                  </tr>
-				        </thead>
-              <tbody id="the-list">
-                <?php
-                foreach($rows as $survey)
-                {
- 
- 
-                ?>            
-                <tr id="survey_<?php echo $survey->id;?>" data-id="<?php echo $survey->id;?>" class="<?php echo $survey->id;?>">
-                  <td><?php echo $survey->title;?></td>
-                  <td><?php echo $survey->total_questions; ?></td>
-                  <td><code id="code_<?php echo $survey->id;?>" onclick="selectText('code_<?php echo $survey->id;?>')">[az_surveyplus id="<?php echo $survey->id;?>"]
-                  </code><code id="code_stats_<?php echo $survey->id;?>"  onclick="selectText('code_stats_<?php echo $survey->id;?>')">
-                    [az_surveyplus_stats id="<?php echo $survey->id;?>"]</code></td>
-                  <td><a data-id="<?php echo $survey->id;?>" class="delete" href="javascript:void(0)">Delete</a> |  <a href="<?php echo  admin_url()."admin.php?page=edit-az-survey-form&action=edit&id=".$survey->id; ?>">Edit</a></td>
-                </tr>
-                <?php
-              }
-              ?>
-              </tbody>
-            </table>	
-		</form>
-	</div>	      
-
-
 
  <script type="text/javascript">
     $ = jQuery;

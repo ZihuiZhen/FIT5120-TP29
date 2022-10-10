@@ -1,11 +1,6 @@
 <?php
 	global $wpdb;
 	$survey_form = $wpdb->get_row("select * from az_survey_forms where id='$id'");
-	//wp_enqueue_script( 'test-scripte', plugins_url(). '/Wordpress-Survey-Plugin/js/test.js', false );
-	wp_enqueue_script( 'jquery-script', 'https://code.jquery.com/jquery-2.2.4.min.js');
-	wp_enqueue_script( 'test-script', plugins_url(). '/Wordpress-Survey-Plugin/js/survey.js', false );
-
-	wp_enqueue_style('main-styles', plugins_url() . '/Wordpress-Survey-Plugin/css/style.css');
 ?>
 <style>
 
@@ -77,6 +72,7 @@
 <script>
 $ = jQuery;
 $('#survey_form').on('submit', function(e){
+
 	var answered=0;
 	// validation
 	$("#survey_form .question").each(function(question_index){
@@ -120,15 +116,29 @@ $('#survey_form').on('submit', function(e){
 		type:"POST",
 		cache:false,
 		processData:false,
-		contentType:false
+		contentType:false,
 
 	}).done(function(response){
+
+		var res;
+		try {
+		
+			res = JSON.parse(response);
+		
+			console.info('returned: ', res);
+
+		} catch(e) {
+
+			console.log('error in response');
+		}
+		return false;
+
 		if(response=='1')
 		{
 			//$("#survey_form").html("<div id='success_msg'>Bedankt voor uw deelname!</div>");
 			
 			// Simulate a mouse click:
-			window.location.href = "https://activitiesforcarers.cf/activity-suggestions/";
+			// window.location.href = "https://activitiesforcarers.cf/activity-suggestions/";
 		}
 		else
 		{

@@ -1,0 +1,19 @@
+[1] => WP_Term Object
+        (
+            [term_id] => 10
+            [name] => Indoor
+            [slug] => indoor
+            [term_group] => 0
+            [term_taxonomy_id] => 10
+            [taxonomy] => category
+            [description] => 
+            [parent] => 4
+            [count] => 1
+            [filter] => raw
+            [cat_ID] => 10
+            [category_count] => 1
+            [category_description] => 
+            [cat_name] => Indoor
+            [category_nicename] => indoor
+            [category_parent] => 4
+        )
