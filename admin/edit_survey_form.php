@@ -115,7 +115,14 @@ dashicons-plus-alt"></i> Edit Survey Form</h2>
 									<?php endforeach ?>
 									</select>
 
+									<?php
+									/*
+									 disable the original rating value - new value is hidden and always 100
 									<input type="text" id="answer_category_rating" name="answer_category_rating[<?= $question_number-1 ?>][]" value="<?php echo $answer_ratings[$answer->id]->rating ?>"> 
+									*/
+									?>
+
+									<input type="hidden" id="answer_category_rating" name="answer_category_rating[<?= $question_number-1 ?>][]" value="100"> 
 
 								</div>
 

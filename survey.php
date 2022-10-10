@@ -3,11 +3,17 @@
     Plugin Name: Survey Plus
     Description: Plugin for showing and creating survey form
     Author: Ayyaz Zafar
-    Version: 1.9
+    Version: 1.10.1
     Author URI: http://www.AyyazZafar.com
 
 
     */
+
+
+if (!session_id()) {
+    session_start();
+}
+
 
 add_action('admin_menu', 'az_survey_form_menu');
 
@@ -23,34 +29,38 @@ function az_survey_form_menu() {
     add_submenu_page (null,  'edit survey', 'edit survey', 1, 'edit-az-survey-form', "sfp_edit_survey_form");
     add_submenu_page ('survey-plus',  'Add New', 'Add New', 1, 'add-new-az-survey-form', "spf_new_survey_form");
 	add_submenu_page ('survey-plus',  'Settings', 'Settings', 1, 'az-survey-settings', "spf_settings");
+
+
 }
 
-function spf_settings()
-{
+add_action( 'admin_init' , 'az_survey_admin_init' );
+
+function az_survey_admin_init(){
 	// Register a new setting
-	register_setting( 'az_survey_options_group', 'az_survey_options' );
+	register_setting( 'az_survey_options_group', 'az_survey_results_page_url' );
 
 	// Register a new section in the "wporg" page.
 	add_settings_section(
 		'az_survey_general_options',
-		__( 'General settings', 'az_survey' ), 'az_survey_general_settings',
-		'az_survey_options_page'
+		__( 'General settings', 'az_survey' ), 
+		'az_survey_general_settings',
+		'az-survey-settings'
 	);
 
 	// Register a new field in the "wporg_section_developers" section, inside the "wporg" page.
 	add_settings_field(
-		'az_survey_result_page_url', // As of WP 4.6 this value is used only internally.
+		'az_survey_results_page_url', // As of WP 4.6 this value is used only internally.
 								// Use $args' label_for to populate the id inside the callback.
-			__( 'Result Page URL', 'az_survey' ),
-		'az_survey_result_page_url',
-		'az_survey_options_page',
+		__( 'Result Page URL', 'az_survey' ),
+		'az_survey_results_page_url',
+		'az-survey-settings',
 		'az_survey_general_options',
-		array(
-			'label_for'         => 'az_survey_result_page_url',
-			// 'class'             => 'wporg_row',
-			// 'wporg_custom_data' => 'custom',
-		)
-	);
+);
+}
+	
+function spf_settings()
+{
+
 
 	include("views/admin/settings.php");
 }
@@ -60,11 +70,9 @@ function az_survey_general_settings()
     // echo    "general Settings";
 }
 
-function az_survey_result_page_url()
+function az_survey_results_page_url()
 {
-	$options = get_option('az_survey_options');
-
-	echo '<pre>'. print_r($options, true). "</pre>";
+	$results_page_url = get_option('az_survey_results_page_url');
 
 	include("views/fields/results_page_url.php");
 }
@@ -322,6 +330,10 @@ $sql12 = "CREATE TABLE IF NOT EXISTS `az_survey_answer_categories` (
  * Create the survey page shortcode
  */
  function az_surveyplus_func( $atts ){
+
+	$_SESSION['az_survey']['survey_submit'] = null;
+	$results_page_url = get_option('az_survey_results_page_url');
+
  	ob_start();
  	$id = $atts['id'];
  	include('views/survey_form.php');
@@ -333,39 +345,161 @@ $sql12 = "CREATE TABLE IF NOT EXISTS `az_survey_answer_categories` (
 // Register the shortcode
 add_shortcode( 'az_surveyplus', 'az_surveyplus_func' );
 
+function az_survey_get_meta_options($meta_key, $meta_value, &$allpostMeta, &$id_list){
+	
+	global $wpdb;
+
+	if(!empty($meta_key)){
+
+		$sql = "SELECT * ".
+			"FROM wp_postmeta ".  
+			"WHERE meta_key=%s ".
+			"AND meta_value=%s ";
+
+		$meta_options = $wpdb->get_results($wpdb->prepare($sql, $meta_key, $meta_value));
+		// echo 'meta_options:<pre>'. print_r($meta_options, true).  '</pre>';
+
+		foreach($meta_options as $meta_option){
+			
+			$meta = array(
+				'post_id' => $meta_option->post_id,
+				'meta_key'  => $meta_option->meta_key,
+				'meta_value' => $meta_option->meta_value
+				
+			);
+
+			if (empty($allpostMeta['post_id_'.$meta_option->post_id])) {
+
+				$allpostMeta['post_id_'.$meta_option->post_id] = [];
+			}
+
+			if (!in_array($meta_option->post_id, $id_list)) {
+
+				array_push($id_list, $meta_option->post_id);
+			}
+			
+			array_push($allpostMeta['post_id_'.$meta_option->post_id], $meta);
+			
+
+		}
+	}
+}
+
+function az_survey_results_sort_order($record1, $record2)
+{
+	// sort by the lowest count in reverse order
+	if($record1['count'] < $record2['count']) {
+
+		return 1;
+	}
+
+	// sort by the highest count in reverse order
+	if($record1['count'] > $record2['count']) {
+
+		return -1;
+	}
+
+	// sort by alphabetical order
+	return strcasecmp($record1['title'], $record2['title']);
+}
+
 /**
  * Create the results page shortcode
  */
 function az_surveyplus_results_func( $atts ){
 
+	global $wpdb;
 	wp_enqueue_style('main-styles', plugins_url() . '/Wordpress-Survey-Plugin/css/style.css');
 
-	$id_list = [40,48,50];
+	if(!empty($_SESSION['az_survey']) && !empty($_SESSION['az_survey']['survey_submit'])){
+
+		$arr_question_ids = $_SESSION['az_survey']['survey_submit']['question_ids'];
+		$arr_answers = $_SESSION['az_survey']['survey_submit']['answers'];
+
+		$allpostMeta = [];
+		$id_list = [];
+		foreach($arr_answers as $key=>$answer){
+
+			$answer_id = $answer[0];
+			$records = $wpdb->get_results($wpdb->prepare("select * from az_survey_answer_categories where answer_id=%s",$answer_id));
+			// echo 'records:<pre>'. print_r($records, true).  '</pre>';
+
+
+			// Find the answer categories
+			/* disable finding categories and post meta
+			if(!empty($records)){
+
+				$category = get_category($records[0]->category_id);
+				// echo "cat id:". $records[0]->category_id. "<br>";
+				// echo 'category:<pre>'. print_r($category,true). '</pre>';
+
+				$meta_key = 'az_survey_rating_'.$category->slug;
+				$meta_value = $records[0]->rating;
+				// echo $meta_key. "<br>";
+
+			}
+
+			az_survey_get_meta_options($meta_key, $meta_value, $allpostMeta, $id_list);
+			*/
+
+			if(!empty($records)) {
+				$args = array(
+					// find activity posts
+					'post_type' => 'az_survey_activity',
+
+					// find for category id
+					'category' => $records[0]->category_id,
+
+					// // no limit for number of posts
+					'numberposts' => -1,
+				);
+				$posts = get_posts($args);
+				// echo 'posts<pre>'. print_r($posts, true). '</pre>';
+
+				if(!empty($posts)) {
+
+					foreach($posts as $post) {
+
+						$key = 'post_id_'. $post->ID;
+						// create a value for the first time
+						if (empty($allpostMeta[$key])) {
+
+							$allpostMeta[$key] = array(
+								'post_id' => $post->ID,
+								'title' => $post->post_title,
+								'count' => 1,
+							);
+
+						// update the value
+						} else {
+
+							$allpostMeta[$key]['count'] = $allpostMeta[$key]['count'] + 1;
+						}
+					}
+				}
+			}
+		}
+
+		usort($allpostMeta, 'az_survey_results_sort_order');
+
+		// echo 'allpostMeta:<pre>'. print_r($allpostMeta, true).  '</pre>';
+		foreach($allpostMeta as $post) {
+			array_push($id_list, $post['post_id']);
+		}
+		// echo 'id_list:<pre>'. print_r($id_list, true).  '</pre>';
+	}
+
+
+	// $id_list = [40,48,50];
 
 	$args = array(
 		//'p'         => 40, // ID of a page, post, or custom type
 		'post__in' => $id_list,
-		'orderby' => 'ASC',
-		'post_type' => 'any'
+		'orderby' => 'post__in',
+		'post_type' => 'az_survey_activity',
+		'number' => 3
 	  );
 	  $results = new WP_Query($args);
-
-	//   die('<pre>'. print_r($results, true));
-
-	/*
-
-
-SELECT az_survey_activities.id as activity_id, activity_name, category_name, rating 
-FROM az_survey_activities_categories
-INNER JOIN az_survey_activities ON az_survey_activities.id = az_survey_activities_categories.activity_id
-INNER JOIN az_survey_categories ON az_survey_categories.id = az_survey_activities_categories.category_id
-WHERE 
-	(category_name = 'Individual' AND rating >= '50')
-OR (category_name = 'Skills' AND rating < '50')
-ORDER BY activity_id
-;	
-
-	*/
 
 	ob_start();
 	$id = $atts['id'];
@@ -406,7 +540,11 @@ function sfp_edit_survey_form()
 {
 	global $wpdb;
 
-	$categories = get_categories();
+	$args = array(
+		// get all the categories
+		'hide_empty' =>  false,
+	);
+	$categories = get_categories($args);
 
 	$form_id = $_GET['id'];
 	$records = $wpdb->get_results($wpdb->prepare("select * from az_survey_answer_categories where form_id=%s",$form_id));
@@ -608,7 +746,7 @@ function save_user_submission()
 {
 	global $wpdb;
 	$arr_question_ids = $_POST['question_ids'];
-		//print_r($_POST); die;
+	// print_r($_POST); die;
 
 	foreach($arr_question_ids as $question_index=>$question_id)
 	{
@@ -641,17 +779,27 @@ function save_user_submission()
 		
 	}
 
-	$score = az_survey_analyze();
+	$response = az_survey_user_submission_session();
 
-	echo json_encode($score);
-	wp_die();
+
+	wp_send_json_success($response);
+	// echo json_encode($score);
+	// wp_die();
 }
 
-function az_survey_analyze(){
-	
-	$arr_question_ids = $_POST['question_ids'];
+function az_survey_user_submission_session(){
 
-	return $_POST;
+	$_SESSION['az_survey'] = array(
+
+		'survey_submit' =>array(
+			
+			'question_ids' => $_POST['question_ids'],
+			'answers' => $_POST['answers']
+
+		)
+	);
+
+	return true;
 }
 
 function ajax_delete_survey_answer()
@@ -723,7 +871,7 @@ function az_survey_create_posttype() {
         array(
             'labels' => array(
                 'name' => __( 'Activities' ),
-                'singular_name' => __( 'Activitiy' )
+                'singular_name' => __( 'Activity' )
             ),
             'public' => true,
             'has_archive' => true,
@@ -881,8 +1029,10 @@ function az_survey_rating_meta_box_save_data( $post_id ) {
 
 // Hooking up our function to theme setup
 add_action( 'init', 'az_survey_init' );
-add_action('add_meta_boxes', 'az_survey_addmetaboxes');
-add_action( 'save_post', 'az_survey_rating_meta_box_save_data' );
+
+// Disable meta box and post save
+//add_action('add_meta_boxes', 'az_survey_addmetaboxes');
+//add_action( 'save_post', 'az_survey_rating_meta_box_save_data' );
 
 add_action('wp_enqueue_scripts', 'az_survey_enqueue_scripts');
 

@@ -102,7 +102,8 @@ $('#survey_form').on('submit', function(e){
 	});
 		if(answered<1)
 		{
-			alert('U heeft niet alle vragen beantwoord.');
+			//alert('U heeft niet alle vragen beantwoord.');
+			alert('Please answer all the questions.');
 			return false;
 		}
 
@@ -120,29 +121,19 @@ $('#survey_form').on('submit', function(e){
 
 	}).done(function(response){
 
-		var res;
-		try {
-		
-			res = JSON.parse(response);
-		
-			console.info('returned: ', res);
 
-		} catch(e) {
+		console.log('response', response);
+		// return false;
 
-			console.log('error in response');
-		}
-		return false;
-
-		if(response=='1')
+		if(response && response.success && response.data)
 		{
-			//$("#survey_form").html("<div id='success_msg'>Bedankt voor uw deelname!</div>");
-			
-			// Simulate a mouse click:
-			// window.location.href = "https://activitiesforcarers.cf/activity-suggestions/";
+			console.log('response', response);
+			window.location.href = "<?php echo $results_page_url ?>";
 		}
 		else
 		{
-			alert("Submission Failed..Response: "+response);
+			//alert("Submission Failed..Response: "+response);
+			alert('There was an error submitting the survey, please try again.');
 		}
 	});
 });

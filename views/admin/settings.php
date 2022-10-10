@@ -1,13 +1,11 @@
 <h1>Settings</h1>
 
-<form action="options.php">
+<form method='post' action="options.php">
 <?php 
 
 	settings_fields('az_survey_options_group');
-    do_settings_sections('az_survey_options_page');
-
+    do_settings_sections('az-survey-settings');
+	submit_button();
 ?>
-
-<input id="az_survey_result_page_url" type="submit" value="Submit">
 
 </form>
